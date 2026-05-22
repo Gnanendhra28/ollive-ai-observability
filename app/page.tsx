@@ -104,25 +104,47 @@ export default function Home() {
         }),
       });
 
-      const data = await response.json();
+      if (!response.body) {
+        setLoading(false);
+        return;
+      }
 
-      if (data.success) {
-        if (!conversationId && data.conversationId) {
-          setConversationId(data.conversationId);
-        }
+      const reader = response.body.getReader();
+
+      const decoder = new TextDecoder();
+
+      let assistantText = "";
+
+      // Empty assistant message first
+      setMessages([
+        ...updatedMessages,
+        {
+          role: "assistant",
+          content: "",
+        },
+      ]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) break;
+
+        const chunk = decoder.decode(value, {
+          stream: true,
+        });
+
+        assistantText += chunk;
 
         setMessages([
           ...updatedMessages,
           {
             role: "assistant",
-            content: data.message.content,
-
-            metadata: data.message.metadata,
+            content: assistantText,
           },
         ]);
-
-        fetchConversations();
       }
+
+      fetchConversations();
     } catch (error) {
       console.error(error);
     }

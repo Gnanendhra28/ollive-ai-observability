@@ -1,60 +1,41 @@
-import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { generateChatCompletion } from "@/lib/ai/llm-wrapper";
+import { streamText } from "ai";
 
-export async function POST(req: NextRequest) {
+import { groq } from "@ai-sdk/groq";
+
+export const runtime = "edge";
+
+export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const { messages } = await req.json();
 
-    const messages = body.messages;
+    const result = streamText({
+      model: groq("llama-3.3-70b-versatile"),
 
-    let conversationId = body.conversationId;
+      system: `
+You are Ollive AI, a modern helpful AI assistant.
 
-    if (!conversationId) {
-      const conversation = await prisma.conversation.create({
-        data: {
-          title: messages[0]?.content.slice(0, 50) || "New Chat",
-        },
-      });
+You can:
+- answer coding questions
+- solve math problems
+- explain concepts
+- generate code
+- help with debugging
+- answer general questions
 
-      conversationId = conversation.id;
-    }
+Always give clean and clear responses.
+`,
 
-    const latestMessage = messages[messages.length - 1];
-
-    await prisma.message.create({
-      data: {
-        conversationId,
-        role: latestMessage.role,
-        content: latestMessage.content,
-      },
+      messages,
     });
 
-    const response = await generateChatCompletion(messages, conversationId);
-
-    await prisma.message.create({
-      data: {
-        conversationId,
-        role: "assistant",
-        content: response.message,
-      },
-    });
-
-    return Response.json({
-      success: true,
-      conversationId,
-      message: {
-        role: "assistant",
-        content: response.message,
-      },
-    });
+    return result.toTextStreamResponse();
   } catch (error) {
     console.error(error);
 
     return Response.json(
       {
         success: false,
-        error: "Something went wrong",
+        error: "Streaming failed",
       },
       {
         status: 500,
