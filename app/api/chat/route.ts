@@ -1,45 +1,47 @@
-import { streamText } from "ai";
+import { NextRequest } from "next/server";
+import Groq from "groq-sdk";
 
-import { groq } from "@ai-sdk/groq";
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
 
-export const runtime = "edge";
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { messages } = await req.json();
+    const body = await req.json();
 
-    const result = streamText({
-      model: groq("llama-3.3-70b-versatile"),
-
-      system: `
-You are Ollive AI, a modern helpful AI assistant.
-
-You can:
-- answer coding questions
-- solve math problems
-- explain concepts
-- generate code
-- help with debugging
-- answer general questions
-
-Always give clean and clear responses.
-`,
-
-      messages,
+    const completion = await groq.chat.completions.create({
+      messages: body.messages.map((msg: { role: string; content: string }) => ({
+        role: msg.role,
+        content: msg.content,
+      })),
+      model: body.model || "llama-3.3-70b-versatile",
+      stream: true,
     });
 
-    return result.toTextStreamResponse();
+    const encoder = new TextEncoder();
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        for await (const chunk of completion) {
+          const content = chunk.choices[0]?.delta?.content || "";
+
+          controller.enqueue(encoder.encode(content));
+        }
+
+        controller.close();
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+      },
+    });
   } catch (error) {
     console.error(error);
 
-    return Response.json(
-      {
-        success: false,
-        error: "Streaming failed",
-      },
-      {
-        status: 500,
-      },
-    );
+    return new Response("Streaming error", {
+      status: 500,
+    });
   }
 }
