@@ -42,15 +42,29 @@ export async function GET() {
 }
 export async function POST(req: Request) {
   try {
+    console.log("POST ROUTE STARTED");
+
     await connectDB();
 
     const { userId } = await auth();
+
+    console.log("POST USER:", userId);
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await req.json();
+
+    console.log("BODY:", body);
+
+    // CLEAN INVALID MESSAGES
+    const cleanedMessages = (body.messages || []).filter(
+      (msg: { role?: string; content?: string }) =>
+        msg && msg.role && typeof msg.content === "string",
+    );
+
+    console.log("CLEANED MESSAGES:", cleanedMessages);
 
     let conversation;
 
@@ -61,21 +75,30 @@ export async function POST(req: Request) {
           userId,
         },
         {
-          title: body.title,
-          messages: body.messages,
+          title: body.title || "New Chat",
+
+          messages: cleanedMessages,
+
           pinned: body.pinned || false,
         },
         {
           new: true,
         },
       );
+
+      console.log("UPDATED CONVERSATION:", conversation);
     } else {
       conversation = await Conversation.create({
         userId,
-        title: body.title,
-        messages: body.messages,
+
+        title: body.title || "New Chat",
+
+        messages: cleanedMessages,
+
         pinned: body.pinned || false,
       });
+
+      console.log("CREATED CONVERSATION:", conversation);
     }
 
     return NextResponse.json({
@@ -83,7 +106,7 @@ export async function POST(req: Request) {
       conversation,
     });
   } catch (error) {
-    console.error("POST ERROR:", error);
+    console.error("FULL POST ERROR:", error);
 
     return NextResponse.json(
       {
