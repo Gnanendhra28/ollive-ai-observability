@@ -6,15 +6,6 @@ if (!MONGODB_URI) {
   throw new Error("Please define MONGODB_URI");
 }
 
-interface MongooseCache {
-  conn: typeof mongoose | null;
-  promise: Promise<typeof mongoose> | null;
-}
-
-declare global {
-  var mongooseCache: MongooseCache | undefined;
-}
-
 const cached = global.mongooseCache || {
   conn: null,
   promise: null,
