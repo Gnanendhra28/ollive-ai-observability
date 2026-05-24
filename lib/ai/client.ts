@@ -1,5 +1,6 @@
 import Groq from "groq-sdk";
 import { retrieveRelevantChunks } from "./retrieve";
+import { ProviderType } from "./providers";
 import { logAIError, logAIRequest, logAIResponse } from "./observability";
 
 const groq = new Groq({
@@ -13,9 +14,11 @@ type ChatMessage = ChatCompletionMessageParam;
 export async function generateStreamingResponse({
   messages,
   model,
+  provider = "groq",
 }: {
   messages: ChatMessage[];
   model: string;
+  provider?: ProviderType;
 }) {
   const start = Date.now();
 
@@ -23,6 +26,7 @@ export async function generateStreamingResponse({
     logAIRequest({
       model,
       messageCount: messages.length,
+      provider,
     });
 
     const latestMessage = messages[messages.length - 1]?.content || "";
