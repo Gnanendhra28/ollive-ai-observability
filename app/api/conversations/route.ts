@@ -77,7 +77,13 @@ export async function POST(req: Request) {
         {
           title: body.title || "New Chat",
 
-          messages: cleanedMessages,
+          messages: cleanedMessages.map(
+            (msg: { role?: string; content?: string }) => ({
+              role: msg.role || "assistant",
+              content: msg.content || "",
+              timestamp: new Date(),
+            }),
+          ),
 
           pinned: body.pinned || false,
         },
@@ -93,7 +99,13 @@ export async function POST(req: Request) {
 
         title: body.title || "New Chat",
 
-        messages: cleanedMessages,
+        messages: cleanedMessages.map(
+          (msg: { role?: string; content?: string }) => ({
+            role: msg.role || "assistant",
+            content: msg.content || "",
+            timestamp: new Date(),
+          }),
+        ),
 
         pinned: body.pinned || false,
       });
