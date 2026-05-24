@@ -1,14 +1,21 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, models, model } from "mongoose";
 
 const MessageSchema = new Schema(
   {
-    role: String,
-    content: String,
-    timestamp: String,
+    role: {
+      type: String,
+      required: true,
+    },
+    content: {
+      type: String,
+      required: true,
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now,
+    },
   },
-  {
-    _id: false,
-  },
+  { _id: false },
 );
 
 const ConversationSchema = new Schema(
@@ -20,10 +27,13 @@ const ConversationSchema = new Schema(
 
     title: {
       type: String,
-      default: "New Chat",
+      required: true,
     },
 
-    messages: [MessageSchema],
+    messages: {
+      type: [MessageSchema],
+      default: [],
+    },
 
     pinned: {
       type: Boolean,
@@ -35,5 +45,7 @@ const ConversationSchema = new Schema(
   },
 );
 
-export default mongoose.models.Conversation ||
-  mongoose.model("Conversation", ConversationSchema);
+const Conversation =
+  models.Conversation || model("Conversation", ConversationSchema);
+
+export default Conversation;
