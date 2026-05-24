@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
+import mongoose, { Schema, models, model } from "mongoose";
 
-const MessageSchema = new mongoose.Schema(
+const MessageSchema = new Schema(
   {
     role: {
       type: String,
@@ -22,7 +22,7 @@ const MessageSchema = new mongoose.Schema(
   },
 );
 
-const ConversationSchema = new mongoose.Schema(
+const ConversationSchema = new Schema(
   {
     userId: {
       type: String,
@@ -49,5 +49,7 @@ const ConversationSchema = new mongoose.Schema(
   },
 );
 
-export default mongoose.models.Conversation ||
-  mongoose.model("Conversation", ConversationSchema);
+const Conversation =
+  models.Conversation || model("Conversation", ConversationSchema);
+
+export default Conversation;

@@ -3,17 +3,16 @@ import { connectDB } from "@/lib/mongodb";
 import Conversation from "@/models/Conversation";
 import { auth } from "@clerk/nextjs/server";
 
+type ChatMessage = {
+  role: string;
+  content: string;
+};
+
 export async function GET() {
   try {
-    console.log("GET ROUTE STARTED");
-
     await connectDB();
 
-    console.log("DB CONNECTED");
-
     const { userId } = await auth();
-
-    console.log("USER ID:", userId);
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -21,16 +20,16 @@ export async function GET() {
 
     const conversations = await Conversation.find({
       userId,
+    }).sort({
+      updatedAt: -1,
     });
-
-    console.log("FOUND:", conversations.length);
 
     return NextResponse.json({
       success: true,
       conversations,
     });
   } catch (error) {
-    console.error("FULL GET ERROR:", error);
+    console.error("GET ERROR:", error);
 
     return NextResponse.json(
       {
@@ -40,15 +39,12 @@ export async function GET() {
     );
   }
 }
+
 export async function POST(req: Request) {
   try {
-    console.log("POST ROUTE STARTED");
-
     await connectDB();
 
     const { userId } = await auth();
-
-    console.log("POST USER:", userId);
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -56,15 +52,18 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    console.log("BODY:", body);
-
-    // CLEAN INVALID MESSAGES
-    const cleanedMessages = (body.messages || []).filter(
-      (msg: { role?: string; content?: string }) =>
-        msg && msg.role && typeof msg.content === "string",
-    );
-
-    console.log("CLEANED MESSAGES:", cleanedMessages);
+    const cleanedMessages = (Array.isArray(body.messages) ? body.messages : [])
+      .filter(
+        (msg: ChatMessage) =>
+          msg &&
+          typeof msg.role === "string" &&
+          typeof msg.content === "string",
+      )
+      .map((msg: ChatMessage) => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: new Date(),
+      }));
 
     let conversation;
 
@@ -76,41 +75,20 @@ export async function POST(req: Request) {
         },
         {
           title: body.title || "New Chat",
-
-          messages: cleanedMessages.map(
-            (msg: { role?: string; content?: string }) => ({
-              role: msg.role || "assistant",
-              content: msg.content || "",
-              timestamp: new Date(),
-            }),
-          ),
-
+          messages: cleanedMessages,
           pinned: body.pinned || false,
         },
         {
           new: true,
         },
       );
-
-      console.log("UPDATED CONVERSATION:", conversation);
     } else {
       conversation = await Conversation.create({
         userId,
-
         title: body.title || "New Chat",
-
-        messages: cleanedMessages.map(
-          (msg: { role?: string; content?: string }) => ({
-            role: msg.role || "assistant",
-            content: msg.content || "",
-            timestamp: new Date(),
-          }),
-        ),
-
+        messages: cleanedMessages,
         pinned: body.pinned || false,
       });
-
-      console.log("CREATED CONVERSATION:", conversation);
     }
 
     return NextResponse.json({
@@ -118,7 +96,7 @@ export async function POST(req: Request) {
       conversation,
     });
   } catch (error) {
-    console.error("FULL POST ERROR:", error);
+    console.error("POST ERROR:", error);
 
     return NextResponse.json(
       {
