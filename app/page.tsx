@@ -199,6 +199,13 @@ export default function Home() {
       });
 
       const savedData = await savedResponse.json();
+
+      if (!savedData?.conversation) {
+        console.error("Conversation save failed", savedData);
+        setLoading(false);
+        return;
+      }
+
       const newConversation = savedData.conversation;
 
       setConversations((prev) => {
@@ -217,7 +224,9 @@ export default function Home() {
 
       console.log("Conversation saved");
 
-      setConversationId(conversationId || newConversation._id);
+      if (newConversation?._id) {
+        setConversationId(String(newConversation._id));
+      }
     } catch (error) {
       console.error(error);
     }
