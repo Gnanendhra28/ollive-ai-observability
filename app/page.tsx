@@ -7,6 +7,7 @@ import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import { SignInButton, useClerk, useUser, UserButton } from "@clerk/nextjs";
 import { decode } from "html-entities";
+import UploadDocument from "@/components/UploadDocument";
 import { LogIn } from "lucide-react";
 import {
   Copy,
@@ -731,6 +732,8 @@ export default function Home() {
                 Export Chat
               </button>
             </div>{" "}
+            <div className="flex-1 overflow-y-auto">Chat Messages</div>
+            <UploadDocument />
             {/* Input Row */}{" "}
             <div className="flex items-center gap-3">
               {" "}

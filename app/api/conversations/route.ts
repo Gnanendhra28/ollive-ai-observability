@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-
+    console.log("BODY:", body);
     const cleanedMessages = (Array.isArray(body.messages) ? body.messages : [])
       .filter(
         (msg: ChatMessage) =>
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
       }));
 
     let conversation;
-
+    console.log("MESSAGES:", body.messages);
     if (body.mongoId) {
       conversation = await Conversation.findOneAndUpdate(
         {
