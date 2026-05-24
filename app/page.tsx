@@ -1,21 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
-
-import { Plus, Send, MessageSquare, Sparkles, Menu, X } from "lucide-react";
-
+import { Plus, Send, MessageSquare, Sparkles, X } from "lucide-react";
 import { motion } from "framer-motion";
-import { Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import { SignInButton, useClerk, useUser, UserButton } from "@clerk/nextjs";
@@ -62,7 +49,6 @@ export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hasRestored, setHasRestored] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const { theme, setTheme } = useTheme();
   const activeConversation = conversations.find(
     (c) =>
       String(c._id) === String(conversationId) ||

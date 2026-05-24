@@ -1,20 +1,27 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
-const MessageSchema = new mongoose.Schema({
-  role: String,
-  content: String,
-  model: String,
-  metadata: Object,
-});
+const MessageSchema = new Schema(
+  {
+    role: String,
+    content: String,
+    timestamp: String,
+  },
+  {
+    _id: false,
+  },
+);
 
-const ConversationSchema = new mongoose.Schema(
+const ConversationSchema = new Schema(
   {
     userId: {
       type: String,
       required: true,
     },
 
-    title: String,
+    title: {
+      type: String,
+      default: "New Chat",
+    },
 
     messages: [MessageSchema],
 
@@ -23,11 +30,10 @@ const ConversationSchema = new mongoose.Schema(
       default: false,
     },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+  },
 );
 
-const Conversation =
-  mongoose.models.Conversation ||
+export default mongoose.models.Conversation ||
   mongoose.model("Conversation", ConversationSchema);
-
-export default Conversation;
